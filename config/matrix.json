@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "supported": [
+    {
+      "architecture": "x86_64",
+      "profile": "minimal",
+      "platform": "generic"
+    }
+  ],
+  "planned": [
+    {"architecture": "aarch64", "profile": "minimal", "platform": "generic"},
+    {"architecture": "armv7h", "profile": "minimal", "platform": "generic"},
+    {"architecture": "riscv64", "profile": "minimal", "platform": "generic"},
+    {"architecture": "x86_64", "profile": "desktop", "platform": "generic"},
+    {"architecture": "x86_64", "profile": "installer", "platform": "generic"},
+    {"architecture": "x86_64", "profile": "rescue", "platform": "generic"}
+  ]
+}
+

@@ -1,0 +1,4 @@
+# x86_64-specific packages. Keep architecture packages separate from profile
+# packages so future architectures can choose different kernels and firmware.
+amd-ucode
+

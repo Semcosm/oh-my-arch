@@ -1,0 +1,7 @@
+# Shared packages for every Oh My Arch image.
+base
+linux
+linux-firmware
+mkinitcpio
+mkinitcpio-archiso
+bash

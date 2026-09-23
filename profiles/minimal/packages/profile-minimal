@@ -1,0 +1,4 @@
+# Packages specific to the minimal profile.
+networkmanager
+openssh
+
