@@ -8,7 +8,7 @@ cd "$root_dir"
 ./oma build --help >/dev/null
 ./oma check | grep -Fq 'build model check passed'
 plan="$(./oma build --arch x86_64 --profile minimal --dry-run)"
-printf '%s\n' "$plan" | grep -Fq 'packages:     9'
+printf '%s\n' "$plan" | grep -Fq 'packages:     10'
 printf '%s\n' "$plan" | grep -Fq 'architectures/x86_64/packages'
 printf '%s\n' "$plan" | grep -Fq 'platforms/generic/packages'
 component_plan="$(./oma build --component networking --dry-run)"
