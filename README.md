@@ -58,6 +58,10 @@ The main extension points are:
 
 ## Build dependencies
 
+Release and main-branch ISO builds run remotely in GitHub Actions. The
+workflow uses an Arch Linux container and publishes the ISO artifacts for
+download; local builds are optional development checks only.
+
 Build on a standard Arch Linux x86_64 host. The backend requires the official
 archiso package, which provides mkarchiso:
 
@@ -66,10 +70,17 @@ archiso package, which provides mkarchiso:
 The command does not require a Python package installation. The repository
 root contains the oma launcher.
 
-## Build the first ISO
+## Build the first ISO remotely
 
     git clone <repository-url> oh-my-arch
     cd oh-my-arch
+    gh workflow run oma-build.yml --repo Semcosm/oh-my-arch
+
+Open the Actions run for oma-build and download the uploaded ISO artifact.
+The workflow verifies SHA256SUMS before publishing the artifact bundle.
+
+For local development on Arch Linux, the same command remains available:
+
     oma build --arch x86_64 --profile minimal
 
 The public CLI resolves the build model first and then invokes mkarchiso:

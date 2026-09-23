@@ -1,0 +1,49 @@
+name: oma-build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/oma-build.yml'
+      - 'architectures/**'
+      - 'components/**'
+      - 'config/**'
+      - 'oma'
+      - 'profiles/**'
+      - 'platforms/**'
+      - 'scripts/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-iso:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+
+      - name: Build and verify ISO in Arch Linux
+        run: |
+          docker run --privileged --rm \
+            -v "$GITHUB_WORKSPACE:/workspace" \
+            -w /workspace \
+            archlinux:latest \
+            bash -euc '
+              pacman -Syu --noconfirm --needed archiso git jq make
+              ./oma build --arch x86_64 --profile minimal
+              (cd output && sha256sum -c SHA256SUMS)
+            '
+
+      - name: Upload ISO artifacts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: oh-my-arch-minimal-x86_64
+          path: |
+            output/*.iso
+            output/SHA256SUMS
+            output/*.manifest.json
+          if-no-files-found: error
+          retention-days: 14
