@@ -10,6 +10,7 @@ import os
 import re
 import shlex
 import shutil
+import stat
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -289,6 +290,24 @@ def print_plan(model, package_files, packages, components, version, output_dir, 
     print("  backend:      mkarchiso")
 
 
+def make_tree_removable(root: Path) -> None:
+    """Restore user write/execute bits before removing backend output."""
+    if not root.exists():
+        return
+    for directory, names, files in os.walk(root):
+        os.chmod(directory, Path(directory).stat().st_mode | stat.S_IRWXU)
+        for name in [*names, *files]:
+            path = Path(directory) / name
+            try:
+                mode = path.lstat().st_mode
+                if stat.S_ISLNK(mode):
+                    continue
+                bits = stat.S_IRWXU if stat.S_ISDIR(mode) else stat.S_IRUSR | stat.S_IWUSR
+                os.chmod(path, mode | bits)
+            except FileNotFoundError:
+                continue
+
+
 def run_build(args: argparse.Namespace) -> int:
     project = load_project()
     matrix = load_matrix()
@@ -309,6 +328,7 @@ def run_build(args: argparse.Namespace) -> int:
     stage_profile(stage, profile_dir, model, project, packages, version)
     archiso_work = work_dir / "archiso"
     if archiso_work.exists() and not args.keep_work:
+        make_tree_removable(archiso_work)
         shutil.rmtree(archiso_work)
     archiso_work.mkdir(parents=True, exist_ok=True)
     before = {path.resolve() for path in output_dir.glob("*.iso")}
