@@ -32,7 +32,7 @@ jobs:
             -w /workspace \
             archlinux:latest \
             bash -euc '
-              pacman -Syu --noconfirm --needed archiso git jq make
+              pacman -Syu --noconfirm --needed archiso git jq make python
               ./oma build --arch x86_64 --profile minimal
               (cd output && sha256sum -c SHA256SUMS)
             '
