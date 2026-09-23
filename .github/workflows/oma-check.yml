@@ -1,0 +1,19 @@
+name: oma-check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-model:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Validate Oh My Arch build model
+        run: make check
+      - name: Validate default dry-run
+        run: ./oma build --arch x86_64 --profile minimal --dry-run
+
