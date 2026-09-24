@@ -65,7 +65,7 @@ download; local builds are optional development checks only.
 Build on a standard Arch Linux x86_64 host. The backend requires the official
 archiso package, which provides mkarchiso:
 
-    sudo pacman -S --needed archiso git python
+    sudo pacman -S --needed archiso git openssh python
 
 The command does not require a Python package installation. The repository
 root contains the oma launcher.

@@ -20,7 +20,7 @@ belong in ignored `.oma/` and `output/` paths. Keep `output/.gitkeep` only.
 - `make build` performs a local ISO build on Arch Linux with `archiso` installed.
 - `make clean` removes generated work and output artifacts.
 - `gh workflow run oma-build.yml --repo Semcosm/oh-my-arch` runs the remote
-  ISO build; release artifacts are produced by pushing an annotated `vX.Y.Z` tag.
+  ISO build; releases require an annotated SSH-signed `vX.Y.Z` tag.
 
 ## Coding Style & Naming Conventions
 
@@ -32,13 +32,24 @@ because they are CLI selectors. Run `git diff --check` before committing.
 
 ## Testing Guidelines
 
-Run `./scripts/test/test_oma.sh` and `make check` for model or CLI changes.
-The tests cover help output, dry-run package composition, and rejection of
-unsupported architectures. Changes to policy, workflows, or repository layout
-should also pass `scripts/validate_quality_profile.sh`,
+Run `make check` for model, CLI, or signing changes. It covers help output,
+package composition, unsupported architectures, and signature fixtures. Changes
+to policy, workflows, or repository layout should also pass
+`scripts/validate_quality_profile.sh`,
 `scripts/validate_supply_chain_profile.sh`, `scripts/validate_action_pinning.sh`,
 and `scripts/validate_repository_shape.sh`. Actual ISO verification runs in
 GitHub Actions on the Arch Linux container.
+
+## Commit Signing
+
+Use the dedicated SSH key through an agent; never commit private material. Set
+`gpg.format=ssh`, `user.signingkey=~/.ssh/oh-my-arch-signing.pub`,
+`commit.gpgsign=true`, and `tag.gpgsign=true`. Verify a new range against the
+trusted parent snapshot, for example
+`scripts/validate_commit_signatures.sh HEAD^..HEAD HEAD^`. Release tags must
+pass `scripts/validate_release_tag.sh vX.Y.Z`; it derives the tagged commit's
+parent as the trust baseline. Add or revoke a signer in one signed push, then
+use that signer only in a later push so the baseline cannot be self-authorized.
 
 ## Commit & Pull Request Guidelines
 

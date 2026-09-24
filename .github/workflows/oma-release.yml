@@ -16,6 +16,22 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Restore annotated release tag
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          git fetch --force origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
+
+      - name: Validate release tag signature
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          tag_commit="$(git rev-parse --verify "refs/tags/$RELEASE_TAG^{commit}")"
+          baseline="$(git rev-parse --verify "$tag_commit^")"
+          scripts/validate_release_tag.sh "$RELEASE_TAG" "$baseline"
+
       - name: Build and verify release ISO in Arch Linux
         env:
           OMA_RELEASE_VERSION: ${{ github.ref_name }}

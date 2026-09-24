@@ -6,6 +6,7 @@ help:
 check:
 	./oma check
 	./scripts/test/test_oma.sh
+	./scripts/test/test_signatures.sh
 
 dry-run:
 	./oma build --arch x86_64 --profile minimal --dry-run
@@ -16,4 +17,3 @@ build:
 clean:
 	rm -rf .oma
 	find output -mindepth 1 ! -name .gitkeep -exec rm -rf -- {} +
-

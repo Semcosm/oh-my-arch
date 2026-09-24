@@ -18,6 +18,27 @@ jobs:
       - name: Validate persisted CR coverage on main
         if: github.ref == 'refs/heads/main'
         run: scripts/validate_main_cr_range.sh "${{ github.event.before }}" "${{ github.sha }}"
+      - name: Validate trusted commit signatures
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+          PUSH_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          zeros=0000000000000000000000000000000000000000
+          if [ "$EVENT_NAME" = 'pull_request' ]; then
+            range="$PR_BASE_SHA..$PR_HEAD_SHA"
+            baseline="$PR_BASE_SHA"
+          elif [ "$PUSH_BEFORE_SHA" = "$zeros" ]; then
+            echo 'signature validation requires a pre-existing trusted baseline' >&2
+            exit 1
+          else
+            range="$PUSH_BEFORE_SHA..$PUSH_SHA"
+            baseline="$PUSH_BEFORE_SHA"
+          fi
+          scripts/validate_commit_signatures.sh "$range" "$baseline"
       - name: Validate UGS standard policy
         run: |
           scripts/validate_policy_manifest.sh

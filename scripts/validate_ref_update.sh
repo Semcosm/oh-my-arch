@@ -26,6 +26,10 @@ case "$ref_name" in
     [ "$old_object" != "$zeros" ] || exit 0
     git merge-base --is-ancestor "$old_object" "$new_object" \
       || fail "main updates must be fast-forward"
+    [ -n "$repo_root" ] || fail "main signature validation requires UGS_REPOSITORY_ROOT or a Git work tree"
+    [ -x "$repo_root/scripts/validate_commit_signatures.sh" ] \
+      || fail "commit signature validator is unavailable"
+    "$repo_root/scripts/validate_commit_signatures.sh" "$old_object..$new_object" "$old_object"
     ;;
   refs/tags/v*)
     [ "$new_object" != "$zeros" ] || fail "deleting formal release tags is not allowed"
@@ -35,6 +39,10 @@ case "$ref_name" in
     tag_name="${ref_name#refs/tags/}"
     [ -n "$repo_root" ] || fail "release tag validation requires UGS_REPOSITORY_ROOT or a Git work tree"
     [ -x "$repo_root/scripts/validate_release_tag.sh" ] || fail "release tag validator is unavailable; install the high-trust profile before enforcing formal release tags"
-    "$repo_root/scripts/validate_release_tag.sh" "$tag_name"
+    tag_commit="$(git rev-parse --verify "$new_object^{commit}" 2>/dev/null)" \
+      || fail "formal release tag must point to a commit"
+    baseline="$(git rev-parse --verify "$tag_commit^" 2>/dev/null)" \
+      || fail "formal release tag target must have a trusted parent baseline"
+    "$repo_root/scripts/validate_release_tag.sh" "$tag_name" "$baseline" "$new_object"
     ;;
 esac
