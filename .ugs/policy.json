@@ -51,6 +51,7 @@
   },
   "automation": {
     "required_checks": [
+      "ugs-signatures",
       "ugs-validate"
     ],
     "hooks_path": ".githooks"

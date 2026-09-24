@@ -58,5 +58,6 @@ profile` or `ci: change remote build`. Keep commits focused. For changes merged
 to `main`, add a populated `cr/CR-XXXX.md` record with summary, motivation,
 test evidence, risk, rollback, and full commit OIDs. Pull requests should explain
 the changed build model, include test results, and call out support-matrix or
-artifact changes. Required checks include `oma-check` and `ugs-validate`; do not
-commit ISO files, `.oma/` work trees, package caches, or generated manifests.
+artifact changes. Required checks include `oma-check`, `ugs-validate`,
+and the base-controlled `ugs-signatures` PR check; do not commit ISO files,
+`.oma/` work trees, package caches, or generated manifests.

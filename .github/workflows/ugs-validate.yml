@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  pull_request_target:
 
 jobs:
   ugs-validate:
@@ -49,3 +50,29 @@ jobs:
           if [ -f .ugs/document-map.json ]; then
             scripts/validate_document_map.py
           fi
+
+  # This job intentionally runs from the base revision so a PR cannot replace
+  # the signature validator or its trust-baseline selection.
+  ugs-signatures:
+    if: github.event_name == 'pull_request_target'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+      - name: Fetch pull request head
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags --force origin "refs/pull/$PR_NUMBER/head"
+          git cat-file -e "$PR_HEAD_SHA^{commit}"
+      - name: Validate pull request commit signatures
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: scripts/validate_commit_signatures.sh "$PR_BASE_SHA..$PR_HEAD_SHA" "$PR_BASE_SHA"
