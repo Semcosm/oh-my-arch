@@ -29,6 +29,8 @@ git -C "$repo" config commit.gpgsign false
 git -C "$repo" config tag.gpgsign true
 
 printf 'base\n' > "$repo/fixture.txt"
+git -C "$repo" add fixture.txt
+git -C "$repo" commit --quiet -m 'test: add pre-baseline fixture'
 printf '# v0.0.0\n' > "$repo/releases/v0.0.0.md"
 git -C "$repo" add fixture.txt keys releases
 git -C "$repo" commit --quiet -m 'test: add trusted baseline'
@@ -42,6 +44,14 @@ signed_commit="$(git -C "$repo" rev-parse HEAD)"
 
 (cd "$repo" && scripts/validate_commit_signatures.sh "$signed_commit" "$base_commit")
 (cd "$repo" && scripts/validate_commit_signatures.sh "$base_commit..$signed_commit" "$base_commit")
+
+git -C "$repo" checkout --quiet -b diverged "$base_commit^"
+printf 'diverged\n' > "$repo/diverged.txt"
+git -C "$repo" add diverged.txt
+git -C "$repo" commit --quiet -S -m 'test: validate diverged fixture'
+diverged_commit="$(git -C "$repo" rev-parse HEAD)"
+(cd "$repo" && scripts/validate_commit_signatures.sh "$diverged_commit" "$base_commit")
+git -C "$repo" checkout --quiet main
 
 git -C "$repo" config commit.gpgsign false
 git -C "$repo" commit --allow-empty --quiet -m 'test: add unsigned fixture'

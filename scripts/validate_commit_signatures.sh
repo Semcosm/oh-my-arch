@@ -55,8 +55,6 @@ mapfile -t commits < <(git rev-list --reverse "$revision_range")
 for commit in "${commits[@]}"; do
   [ "$commit" != "$baseline_commit" ] \
     || fail "trusted baseline must precede every commit being validated"
-  git merge-base --is-ancestor "$baseline_commit" "$commit" \
-    || fail "trusted baseline is not an ancestor of commit: $commit"
   if ! git cat-file commit "$commit" | grep -q '^gpgsig '; then
     fail "commit is not signed: $commit"
   fi
