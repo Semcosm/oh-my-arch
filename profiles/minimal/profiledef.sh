@@ -11,3 +11,6 @@ bootmodes=("bios.syslinux" "uefi.systemd-boot")
 arch="${OMA_ARCH:-x86_64}"
 pacman_conf="pacman.conf"
 airootfs_image_type="squashfs"
+file_permissions=(
+  ["/etc/shadow"]="0:0:400"
+)

@@ -37,6 +37,17 @@ jobs:
               (cd output && sha256sum -c SHA256SUMS)
             '
 
+      - name: Install QEMU and UEFI firmware
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes qemu-system-x86 ovmf tesseract-ocr
+
+      - name: Boot smoke test in BIOS and UEFI modes
+        run: |
+          iso="$(find output -maxdepth 1 -type f -name '*.iso' -print -quit)"
+          test -n "$iso"
+          python3 scripts/test/test_iso_boot.py "$iso"
+
       - name: Upload ISO artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:

@@ -77,7 +77,8 @@ root contains the oma launcher.
     gh workflow run oma-build.yml --repo Semcosm/oh-my-arch
 
 Open the Actions run for oma-build and download the uploaded ISO artifact.
-The workflow verifies SHA256SUMS before publishing the artifact bundle.
+Before upload, the workflow verifies SHA256SUMS and boots the ISO in BIOS and
+UEFI QEMU machines, checking that each reaches the Archiso live shell.
 
 For local development on Arch Linux, the same command remains available:
 
