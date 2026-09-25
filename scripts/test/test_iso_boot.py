@@ -67,10 +67,10 @@ class QmpClient:
         self.connection.close()
 
 
-def firmware_path() -> Path:
+def firmware_paths() -> tuple[Path, Path]:
     configured = os.environ.get("OMA_OVMF_CODE")
-    candidates = [Path(configured)] if configured else []
-    candidates.extend(
+    code_candidates = [Path(configured)] if configured else []
+    code_candidates.extend(
         [
             Path("/usr/share/OVMF/OVMF_CODE_4M.fd"),
             Path("/usr/share/OVMF/OVMF_CODE.fd"),
@@ -78,10 +78,23 @@ def firmware_path() -> Path:
             Path("/usr/share/edk2/x64/OVMF_CODE.4m.fd"),
         ]
     )
-    for candidate in candidates:
-        if candidate.is_file():
-            return candidate
-    raise BootTestError("UEFI firmware not found; install OVMF or set OMA_OVMF_CODE")
+    vars_candidates = {
+        "OVMF_CODE_4M.fd": "OVMF_VARS_4M.fd",
+        "OVMF_CODE.fd": "OVMF_VARS.fd",
+        "OVMF_CODE.4m.fd": "OVMF_VARS.4m.fd",
+    }
+    for code in code_candidates:
+        if not code.is_file():
+            continue
+        vars_name = vars_candidates.get(code.name)
+        if vars_name:
+            vars_path = code.with_name(vars_name)
+            if vars_path.is_file():
+                return code, vars_path
+        sibling = code.with_name("OVMF_VARS.fd")
+        if sibling.is_file():
+            return code, sibling
+    raise BootTestError("UEFI OVMF code and vars firmware not found; install OVMF or set OMA_OVMF_CODE")
 
 
 def read_qemu_log(path: Path) -> str:
@@ -91,7 +104,12 @@ def read_qemu_log(path: Path) -> str:
         return ""
 
 
-def run_mode(iso: Path, mode: str, firmware: Path | None, timeout_seconds: int) -> None:
+def run_mode(
+    iso: Path,
+    mode: str,
+    firmware: tuple[Path, Path] | None,
+    timeout_seconds: int,
+) -> None:
     qemu = shutil.which("qemu-system-x86_64")
     tesseract = shutil.which("tesseract")
     if not qemu or not tesseract:
@@ -127,7 +145,17 @@ def run_mode(iso: Path, mode: str, firmware: Path | None, timeout_seconds: int) 
             "-no-reboot",
         ]
         if firmware:
-            command.extend(["-bios", str(firmware)])
+            code, vars_template = firmware
+            vars_copy = temp / "OVMF_VARS.fd"
+            shutil.copyfile(vars_template, vars_copy)
+            command.extend(
+                [
+                    "-drive",
+                    f"if=pflash,format=raw,readonly=on,file={code}",
+                    "-drive",
+                    f"if=pflash,format=raw,file={vars_copy}",
+                ]
+            )
 
         with log_path.open("wb") as log:
             process = subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT)
@@ -135,7 +163,10 @@ def run_mode(iso: Path, mode: str, firmware: Path | None, timeout_seconds: int) 
             monitor: QmpClient | None = None
             latest_ocr = ""
             try:
-                monitor = QmpClient(qmp_path, process, deadline)
+                try:
+                    monitor = QmpClient(qmp_path, process, deadline)
+                except BootTestError as exc:
+                    raise BootTestError(f"{exc}\n{read_qemu_log(log_path)}") from exc
                 while time.monotonic() < deadline:
                     if process.poll() is not None:
                         raise BootTestError(
@@ -199,7 +230,7 @@ def main() -> int:
         return 2
 
     try:
-        firmware = firmware_path()
+        firmware = firmware_paths()
         run_mode(iso, "BIOS", None, timeout_seconds)
         run_mode(iso, "UEFI", firmware, timeout_seconds)
     except BootTestError as exc:
