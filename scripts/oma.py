@@ -171,10 +171,17 @@ def copy_rendered_tree(source: Path, destination: Path, replacements: Dict[str, 
     if not source.exists():
         return
     for item in source.rglob("*"):
-        if item.is_dir() or item.name in {"README.md", ".gitkeep"}:
+        if item.name in {"README.md", ".gitkeep"}:
             continue
         target = destination / item.relative_to(source)
         target.parent.mkdir(parents=True, exist_ok=True)
+        if item.is_symlink():
+            if target.exists() or target.is_symlink():
+                target.unlink()
+            target.symlink_to(os.readlink(item))
+            continue
+        if item.is_dir():
+            continue
         data = item.read_bytes()
         try:
             text = data.decode("utf-8")
